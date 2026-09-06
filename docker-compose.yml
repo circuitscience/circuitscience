@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  csi-mysql:
+    image: mysql:8.0
+    container_name: csi-mysql
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  csi-apache:
+    build: .
+    container_name: csi-apache
+    depends_on:
+      - csi-mysql
+    env_file: .env
+    ports:
+      - "${APACHE_PORT}:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      DB_HOST: csi-mysql
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+
+  csi-phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: csi-phpmyadmin
+    depends_on:
+      - csi-mysql
+    environment:
+      PMA_HOST: csi-mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${PHPMYADMIN_PORT}:80"
+
+  csi-cron:
+    build: .
+    container_name: csi-cron
+    depends_on:
+      - csi-mysql
+    env_file: .env
+    command: ["/usr/sbin/cron", "-f"]
+    volumes:
+      - ./:/var/www/html
+    environment:
+      DB_HOST: csi-mysql
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+
+volumes:
+  db_data: {}
