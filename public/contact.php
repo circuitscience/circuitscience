@@ -1,14 +1,39 @@
 <?php
 declare(strict_types=1);
 
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\PHPMailer;
-
 session_start();
+
+function loadEmailEnv(string $path): array
+{
+    $env = [];
+    if (!is_file($path) || !is_readable($path)) {
+        return $env;
+    }
+
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = array_map('trim', explode('=', $line, 2));
+        if ($key === '') {
+            continue;
+        }
+
+        if (strlen($value) >= 2 && (($value[0] === '"' && str_ends_with($value, '"')) || ($value[0] === "'" && str_ends_with($value, "'")))) {
+            $value = substr($value, 1, -1);
+        }
+
+        $env[$key] = $value;
+    }
+
+    return $env;
+}
 
 function finish(string $state): never
 {
-    header('Location: /?form=' . rawurlencode($state) . '#estimate', true, 303);
+    header('Location: /?form=' . rawurlencode($state), true, 303);
     exit;
 }
 
@@ -47,25 +72,14 @@ if ($name === '' || strlen($name) > 120 || $phone === '' || strlen($phone) > 40 
 }
 
 try {
-    require dirname(__DIR__) . '/vendor/autoload.php';
-    require dirname(__DIR__) . '/app/bootstrap.php';
+    $env = loadEmailEnv(dirname(__DIR__) . '/.env');
 
-    $mail = new PHPMailer(true);
-    $mail->isSMTP();
-    $mail->Host = envValue('SMTP_HOST');
-    $mail->Port = (int) envValue('SMTP_PORT', '587');
-    $mail->SMTPAuth = true;
-    $mail->Username = envValue('SMTP_USERNAME');
-    $mail->Password = envValue('SMTP_PASSWORD');
-    $encryption = strtolower(envValue('SMTP_ENCRYPTION', 'tls'));
-    $mail->SMTPSecure = $encryption === 'ssl' ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->CharSet = 'UTF-8';
-    $mail->setFrom(envValue('SMTP_FROM_EMAIL'), envValue('SMTP_FROM_NAME', 'Circuit Science Website'));
-    $mail->addAddress(envValue('MAIL_TO_EMAIL'), envValue('MAIL_TO_NAME', 'Jerry Bilous'));
-    $mail->addReplyTo((string) $email, $name);
-
-    $mail->Subject = "Website estimate request — {$property}";
-    $mail->Body = implode(PHP_EOL, [
+    $mailTo = $env['MAIL_TO_EMAIL'] ?? 'info@circuitscience.ca';
+    $mailFrom = $env['SMTP_FROM_EMAIL'] ?? 'info@circuitscience.ca';
+    $mailFromName = $env['SMTP_FROM_NAME'] ?? 'Circuit Science Website';
+    $ccEmail = $env['MAIL_CC_EMAIL'] ?? 'mail@jerrybilous.ca';
+    $subject = "Website estimate request — {$property}";
+    $body = implode(PHP_EOL, [
         "Name: {$name}",
         "Phone: {$phone}",
         "Email: {$email}",
@@ -77,25 +91,43 @@ try {
         $details,
     ]);
 
-    $files = $_FILES['attachments'] ?? null;
-    if ($files && is_array($files['name'] ?? null)) {
-        $allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'application/pdf' => 'pdf'];
-        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-        $count = min(count($files['name']), 3);
-        for ($i = 0; $i < $count; $i++) {
-            if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) continue;
-            if (($files['error'][$i] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK || ($files['size'][$i] ?? 0) > 5 * 1024 * 1024) {
-                throw new RuntimeException('Invalid attachment.');
-            }
-            $tmp = (string) $files['tmp_name'][$i];
-            $mime = $fileInfo->file($tmp);
-            if (!isset($allowedTypes[$mime])) throw new RuntimeException('Unsupported attachment.');
-            $safeName = 'attachment-' . ($i + 1) . '.' . $allowedTypes[$mime];
-            $mail->addAttachment($tmp, $safeName);
-        }
+    $headers = [
+        'From: ' . $mailFromName . ' <' . $mailFrom . '>',
+        'Reply-To: ' . $name . ' <' . $email . '>',
+        'Cc: ' . $ccEmail,
+        'Content-Type: text/plain; charset=UTF-8',
+    ];
+
+    $sent = mail($mailTo, $subject, $body, implode("\r\n", $headers));
+    if (!$sent) {
+        throw new RuntimeException('Failed to send estimate email via PHP mail().');
     }
 
-    $mail->send();
+    $confirmationSubject = 'We received your estimate request';
+    $confirmationBody = implode(PHP_EOL, [
+        "Hi {$name},",
+        '',
+        'Thank you for contacting Circuit Science Inc. We have received your estimate request and will respond as soon as possible.',
+        '',
+        'Request summary:',
+        "Property type: {$property}",
+        "Preferred contact: {$contact}",
+        "Phone: {$phone}",
+        '',
+        'If this is an urgent electrical hazard, please call 905-616-2987 instead of waiting for email.',
+        '',
+        'Thank you,',
+        'Circuit Science Inc.',
+    ]);
+
+    $confirmationHeaders = [
+        'From: ' . $mailFromName . ' <' . $mailFrom . '>',
+        'Reply-To: ' . $mailFromName . ' <' . $mailFrom . '>',
+        'Content-Type: text/plain; charset=UTF-8',
+    ];
+
+    mail($email, $confirmationSubject, $confirmationBody, implode("\r\n", $confirmationHeaders));
+
     $_SESSION['last_submission'] = time();
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     finish('sent');

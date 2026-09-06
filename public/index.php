@@ -5,17 +5,74 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 $formState = $_GET['form'] ?? '';
+
+$reviews = [];
+try {
+  require_once __DIR__ . '/../app/Core/db.php';
+  $pdo = getPDO();
+  $stmt = $pdo->query('SELECT name, city, rating, review, created_at FROM reviews WHERE approved = 1 ORDER BY created_at DESC LIMIT 6');
+  $reviews = $stmt->fetchAll() ?: [];
+} catch (Throwable $e) {
+  $reviews = [];
+}
 ?>
 <!doctype html>
 <html lang="en-CA">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Circuit Science Inc. | Master Electrician serving West GTA, Hamilton & Niagara</title>
-  <meta name="description" content="Residential, commercial and healthcare electrical service backed by more than 40 years of experience. Serving West GTA, Hamilton and Niagara. ECRA/ESA 7007167.">
+  <title>Circuit Science Inc. | Electrician in West GTA, Hamilton & Niagara</title>
+  <meta name="description" content="Residential, commercial and healthcare electrical services in the West GTA, Hamilton and Niagara. Licensed electrician with 40+ years of experience. ECRA/ESA 7007167.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://www.circuitscience.ca/">
   <meta name="theme-color" content="#0b1724">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Circuit Science Inc. | Electrician in West GTA, Hamilton & Niagara">
+  <meta property="og:description" content="Residential, commercial and healthcare electrical services in the West GTA, Hamilton and Niagara. Licensed electrician with 40+ years of experience.">
+  <meta property="og:url" content="https://www.circuitscience.ca/">
+  <meta property="og:image" content="https://www.circuitscience.ca/assets/og-image.png">
+  <meta property="og:image:alt" content="Circuit Science Inc. electrical services in Ontario">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Circuit Science Inc. | Electrical services in Ontario">
+  <meta name="twitter:description" content="Electrical repairs, upgrades and commercial work across the West GTA, Hamilton and Niagara.">
+  <meta name="twitter:image" content="https://www.circuitscience.ca/assets/og-image.png">
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Electrician",
+    "name": "Circuit Science Inc.",
+    "url": "https://www.circuitscience.ca/",
+    "telephone": "+1-905-616-2987",
+    "email": "info@circuitscience.ca",
+    "description": "Residential, commercial and healthcare electrical contractor serving the West GTA, Hamilton and Niagara regions.",
+    "areaServed": [
+      "West GTA",
+      "Burlington",
+      "Oakville",
+      "Hamilton",
+      "Grimsby",
+      "St. Catharines",
+      "Niagara Region"
+    ],
+    "priceRange": "$$",
+    "foundingDate": "2011",
+    "keywords": [
+      "electrician Burlington",
+      "commercial electrician Hamilton",
+      "electrical panel upgrade Oakville",
+      "healthcare electrical contractor Niagara",
+      "Ontario electrical services"
+    ],
+    "address": {
+      "@type": "PostalAddress",
+      "addressRegion": "ON",
+      "addressCountry": "CA"
+    },
+    "sameAs": []
+  }
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -147,6 +204,30 @@ $formState = $_GET['form'] ?? '';
       </div>
     </section>
 
+    <?php if ($reviews): ?>
+    <section class="reviews section" aria-labelledby="reviews-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <p class="eyebrow eyebrow--dark">What clients say</p>
+          <h2 id="reviews-title">Kind words from homeowners and businesses.</h2>
+        </div>
+        <div class="service-grid">
+          <?php foreach ($reviews as $review): ?>
+            <article class="service-card service-card--light">
+              <span class="service-number">★</span>
+              <h3><?php echo htmlspecialchars($review['name'], ENT_QUOTES, 'UTF-8'); ?></h3>
+              <p><strong><?php echo htmlspecialchars($review['city'], ENT_QUOTES, 'UTF-8'); ?></strong></p>
+              <p>
+                <?php for ($i = 0; $i < (int) $review['rating']; $i++): ?>★<?php endfor; ?>
+              </p>
+              <p>“<?php echo htmlspecialchars($review['review'], ENT_QUOTES, 'UTF-8'); ?>”</p>
+            </article>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </section>
+    <?php endif; ?>
+
     <section class="process section">
       <div class="wrap">
         <div class="section-heading section-heading--compact">
@@ -169,7 +250,12 @@ $formState = $_GET['form'] ?? '';
           <p>Based between major service regions, Circuit Science supports homeowners, businesses and facilities throughout the western Greater Toronto Area and the Niagara corridor.</p>
         </div>
         <div class="area-list" aria-label="Primary service areas">
-          <span>Burlington</span><span>Oakville</span><span>Hamilton</span><span>Grimsby</span><span>St. Catharines</span><span>Niagara Region</span>
+          <a href="electrician-burlington.php">Burlington</a>
+          <a href="electrician-oakville.php">Oakville</a>
+          <a href="commercial-electrician-hamilton.php">Hamilton</a>
+          <a href="electrician-grimsby.php">Grimsby</a>
+          <a href="electrician-st-catharines.php">St. Catharines</a>
+          <a href="electrical-panel-upgrade-niagara.php">Niagara Region</a>
         </div>
       </div>
     </section>

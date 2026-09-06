@@ -144,3 +144,14 @@ CREATE TABLE IF NOT EXISTS service_requests (
     CONSTRAINT fk_service_requests_property FOREIGN KEY (property_id) REFERENCES customer_properties(id) ON DELETE SET NULL,
     CONSTRAINT fk_service_requests_property_type FOREIGN KEY (property_type_id) REFERENCES property_types(id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    city VARCHAR(120) NOT NULL,
+    rating TINYINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    review TEXT NOT NULL,
+    approved TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
