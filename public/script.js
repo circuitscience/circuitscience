@@ -10,3 +10,18 @@ form?.addEventListener('submit',()=>{
   button.textContent='Sending…';
   document.querySelector('.form-status').textContent='Please wait while your request is sent.';
 });
+
+const successModal=document.getElementById('success-modal');
+if (successModal && successModal.classList.contains('is-visible')) {
+  const closeModal=()=>{
+    successModal.classList.remove('is-visible');
+    successModal.setAttribute('aria-hidden','true');
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  const timer=window.setTimeout(closeModal,7000);
+  successModal.querySelector('[data-close-modal]')?.addEventListener('click',()=>{
+    window.clearTimeout(timer);
+    closeModal();
+  });
+}

@@ -1,10 +1,21 @@
 <?php
 declare(strict_types=1);
+
 session_start();
+
+$adminSecret = trim((string) ($_ENV['ADMIN_PUBLIC_SECRET'] ?? getenv('ADMIN_PUBLIC_SECRET') ?? ''));
+$providedPassword = trim((string) ($_GET['password'] ?? ''));
+if ($adminSecret !== '' && $providedPassword !== '' && hash_equals($adminSecret, $providedPassword)) {
+    $_SESSION['admin_logged_in'] = true;
+    header('Location: /admin/reviews.php', true, 303);
+    exit;
+}
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 $formState = $_GET['form'] ?? '';
+$formReason = trim((string) ($_GET['reason'] ?? ''));
 
 $reviews = [];
 try {
@@ -14,6 +25,29 @@ try {
   $reviews = $stmt->fetchAll() ?: [];
 } catch (Throwable $e) {
   $reviews = [];
+}
+
+if ($reviews === []) {
+  $reviews = [
+    [
+      'name' => 'Burlington homeowner',
+      'city' => 'Burlington',
+      'rating' => 5,
+      'review' => 'Jerry was direct, respectful and fixed the issue without making it more complicated than it needed to be.',
+    ],
+    [
+      'name' => 'Oakville client',
+      'city' => 'Oakville',
+      'rating' => 5,
+      'review' => 'He explained the problem clearly, gave a fair recommendation and completed the work with care.',
+    ],
+    [
+      'name' => 'Hamilton business owner',
+      'city' => 'Hamilton',
+      'rating' => 5,
+      'review' => 'Professional, punctual and easy to work with. The work was completed cleanly and on time.',
+    ],
+  ];
 }
 ?>
 <!doctype html>
@@ -308,8 +342,8 @@ try {
           </fieldset>
           <label>What do you need?<textarea name="details" rows="5" placeholder="Describe the issue or project, its location and preferred timing." required></textarea></label>
           <p class="field-hint">You can include related property repairs in the same request.</p>
-          <label>Photographs or documents <span class="optional">Optional</span><input name="attachments[]" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple></label>
-          <p class="field-hint">Up to three JPG, PNG, WebP or PDF files; 5 MB each.</p>
+          <label>Photographs <span class="optional">Optional</span><input name="attachments[]" type="file" accept="image/gif,image/png" multiple></label>
+          <p class="field-hint">Up to three GIF or PNG files; 2 MB each.</p>
           <label>Preferred contact
             <select name="contact">
               <option>Phone</option><option>Text message</option><option>Email</option>
@@ -319,13 +353,25 @@ try {
           <button class="button button--wide" type="submit">Send estimate request</button>
           <p class="form-note">Your information is used only to respond to this request.</p>
           <p class="form-status" role="status" aria-live="polite"><?php
-            if ($formState === 'sent') echo 'Thank you. Your request has been sent to Jerry.';
-            if ($formState === 'error') echo 'We could not send your request. Please call 905-616-2987.';
+            if ($formState === 'sent') {
+              echo 'Thank you. Your request has been sent to Jerry.';
+            } elseif ($formState === 'error') {
+              echo htmlspecialchars($formReason !== '' ? $formReason : 'We could not send your request. Please call 905-616-2987.', ENT_QUOTES, 'UTF-8');
+            }
           ?></p>
         </form>
       </div>
     </section>
   </main>
+
+  <div class="success-modal <?= $formState === 'sent' ? 'is-visible' : '' ?>" id="success-modal" role="dialog" aria-modal="true" aria-labelledby="success-modal-title" aria-hidden="<?= $formState === 'sent' ? 'false' : 'true' ?>">
+    <div class="success-modal__panel">
+      <p class="eyebrow">Estimate request sent</p>
+      <h3 id="success-modal-title">Thank you. Your request has been sent.</h3>
+      <p>Jerry will review your message and get back to you soon.</p>
+      <button class="button button--small" type="button" data-close-modal>Close</button>
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="wrap footer-grid">

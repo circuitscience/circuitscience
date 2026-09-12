@@ -154,4 +154,33 @@ CREATE TABLE IF NOT EXISTS reviews (
     approved TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS estimate_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(160) NOT NULL,
+    phone VARCHAR(40) NOT NULL,
+    email VARCHAR(190) NOT NULL,
+    property_type ENUM('Residential', 'Commercial', 'Healthcare') NOT NULL,
+    preferred_contact ENUM('Phone', 'Text message', 'Email') NOT NULL,
+    community_rate ENUM('Yes', 'No') NOT NULL DEFAULT 'No',
+    details TEXT NOT NULL,
+    source VARCHAR(80) NOT NULL DEFAULT 'public_site',
+    status ENUM('new', 'reviewing', 'quoted', 'closed') NOT NULL DEFAULT 'new',
+    archived TINYINT(1) NOT NULL DEFAULT 0,
+    archived_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS estimate_request_attachments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estimate_request_id INT NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    stored_name VARCHAR(255) NOT NULL,
+    stored_path VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(80) NOT NULL,
+    file_size INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_estimate_request_attachments_request FOREIGN KEY (estimate_request_id) REFERENCES estimate_requests(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
