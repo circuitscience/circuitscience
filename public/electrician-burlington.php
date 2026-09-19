@@ -1,3 +1,9 @@
+<?php
+session_start();
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+?>
 <!doctype html>
 <html lang="en-CA">
 <head>
@@ -99,11 +105,14 @@
             <a href="mailto:info@circuitscience.ca"><small>Email</small>info@circuitscience.ca</a>
           </div>
         </div>
-        <form class="estimate-form" action="contact.php" method="post" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+        <form class="estimate-form" action="/contact.php" method="post">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+          <label class="website-field" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
           <label>Full name<input name="name" autocomplete="name" required></label>
           <label>Phone<input name="phone" type="tel" autocomplete="tel" required></label>
           <label>Email<input name="email" type="email" autocomplete="email" required></label>
+          <label>Property type<select name="property"><option selected>Residential</option><option>Commercial</option><option>Healthcare</option></select></label>
+          <label>Preferred contact<select name="contact"><option>Phone</option><option>Text message</option><option>Email</option></select></label>
           <label>What do you need?<textarea name="details" rows="5" placeholder="Describe the issue or project, its location and preferred timing." required></textarea></label>
           <button class="button button--wide" type="submit">Send estimate request</button>
         </form>

@@ -92,8 +92,8 @@ if (empty($_SESSION['csrf_token'])) {
           </fieldset>
           <label>What do you need?<textarea name="details" rows="5" placeholder="Describe the issue or project, its location and preferred timing." required></textarea></label>
           <p class="field-hint">You can include related property repairs in the same request.</p>
-          <label>Photographs or documents <span class="optional">Optional</span><input name="attachments[]" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple></label>
-          <p class="field-hint">Up to three JPG, PNG, WebP or PDF files; 5 MB each.</p>
+          <label>Photographs or documents <span class="optional">Optional</span><input name="attachments[]" type="file" accept="image/gif,image/jpeg,image/png,image/webp,application/pdf" multiple></label>
+          <p class="field-hint">Up to three GIF, JPG, PNG, WebP or PDF files; 5 MB each.</p>
           <label>Preferred contact
             <select name="contact">
               <option>Phone</option><option>Text message</option><option>Email</option>

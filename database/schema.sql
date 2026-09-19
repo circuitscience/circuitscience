@@ -184,3 +184,133 @@ CREATE TABLE IF NOT EXISTS estimate_request_attachments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_estimate_request_attachments_request FOREIGN KEY (estimate_request_id) REFERENCES estimate_requests(id) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS product_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    table_name VARCHAR(80) NOT NULL UNIQUE,
+    description TEXT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS service_packages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    package_code VARCHAR(80) NOT NULL UNIQUE,
+    name VARCHAR(180) NOT NULL,
+    category VARCHAR(80) NOT NULL DEFAULT 'general',
+    description TEXT NULL,
+    labour_hours DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    labour_rate DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    materials_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    disposal_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    recycling_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    travel_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    markup_pct DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    profit_pct DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    final_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS service_package_components (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    service_package_id INT NOT NULL,
+    component_type ENUM('labour', 'material', 'disposal', 'recycling', 'travel', 'other') NOT NULL DEFAULT 'other',
+    component_name VARCHAR(180) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL DEFAULT 1.00,
+    unit VARCHAR(30) NULL,
+    unit_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    line_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    notes TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_service_package_components_package FOREIGN KEY (service_package_id) REFERENCES service_packages(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS estimates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_name VARCHAR(180) NOT NULL,
+    customer_email VARCHAR(190) NULL,
+    customer_phone VARCHAR(40) NULL,
+    status ENUM('draft', 'sent', 'approved', 'closed') NOT NULL DEFAULT 'draft',
+    notes TEXT NULL,
+    subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    tax_rate DECIMAL(5,2) NOT NULL DEFAULT 13.00,
+    tax_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS estimate_line_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estimate_id INT NOT NULL,
+    product_table VARCHAR(80) NOT NULL,
+    product_id INT NOT NULL,
+    item_number VARCHAR(80) NOT NULL,
+    item_name VARCHAR(180) NOT NULL,
+    item_manufacturer VARCHAR(120) NULL,
+    item_dimensions VARCHAR(120) NULL,
+    item_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    quantity INT NOT NULL DEFAULT 1,
+    line_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_estimate_line_items_estimate FOREIGN KEY (estimate_id) REFERENCES estimates(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS general_info (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_name VARCHAR(180) NOT NULL,
+    company_address_line_1 VARCHAR(190) NULL,
+    company_address_line_2 VARCHAR(190) NULL,
+    company_phone VARCHAR(40) NULL,
+    company_email VARCHAR(190) NULL,
+    company_www VARCHAR(190) NULL,
+    company_logo VARCHAR(255) NULL,
+    tax_rate DECIMAL(5,2) NOT NULL DEFAULT 13.00,
+    labour_rate_1 DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    labour_rate_2 DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    labour_rate_3 DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    contingency DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    markup DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    profit DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    notes TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estimate_id INT NULL,
+    customer_name VARCHAR(180) NOT NULL,
+    customer_email VARCHAR(190) NULL,
+    customer_phone VARCHAR(40) NULL,
+    status ENUM('draft', 'sent', 'paid', 'partial', 'closed') NOT NULL DEFAULT 'draft',
+    notes TEXT NULL,
+    subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    tax_rate DECIMAL(5,2) NOT NULL DEFAULT 13.00,
+    tax_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_invoices_estimate FOREIGN KEY (estimate_id) REFERENCES estimates(id) ON DELETE SET NULL
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS invoice_line_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    invoice_id INT NOT NULL,
+    product_table VARCHAR(80) NOT NULL,
+    product_id INT NOT NULL,
+    item_number VARCHAR(80) NOT NULL,
+    item_name VARCHAR(180) NOT NULL,
+    item_manufacturer VARCHAR(120) NULL,
+    item_dimensions VARCHAR(120) NULL,
+    item_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    quantity INT NOT NULL DEFAULT 1,
+    line_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_invoice_line_items_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

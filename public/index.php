@@ -1,13 +1,20 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../app/Core/helpers.php';
+
 session_start();
 
+$dotenv = getDotEnv(__DIR__ . '/../.env');
+foreach ($dotenv as $key => $value) {
+    if (!array_key_exists($key, $_ENV)) {
+        $_ENV[$key] = $value;
+    }
+}
+
 $adminSecret = trim((string) ($_ENV['ADMIN_PUBLIC_SECRET'] ?? getenv('ADMIN_PUBLIC_SECRET') ?? ''));
-$providedPassword = trim((string) ($_GET['password'] ?? ''));
-if ($adminSecret !== '' && $providedPassword !== '' && hash_equals($adminSecret, $providedPassword)) {
-    $_SESSION['admin_logged_in'] = true;
-    header('Location: /admin/reviews.php', true, 303);
+if (isset($_GET['admin'])) {
+    header('Location: /admin/index.php');
     exit;
 }
 
@@ -134,6 +141,7 @@ if ($reviews === []) {
         <a href="#services">Services</a>
         <a href="#about">Experience</a>
         <a href="#areas">Service area</a>
+        <a class="admin-link" href="/admin/index.php" aria-label="Admin login">Admin</a>
         <a class="button button--small" href="#estimate">Request an estimate</a>
       </nav>
     </div>
@@ -342,8 +350,8 @@ if ($reviews === []) {
           </fieldset>
           <label>What do you need?<textarea name="details" rows="5" placeholder="Describe the issue or project, its location and preferred timing." required></textarea></label>
           <p class="field-hint">You can include related property repairs in the same request.</p>
-          <label>Photographs <span class="optional">Optional</span><input name="attachments[]" type="file" accept="image/gif,image/png" multiple></label>
-          <p class="field-hint">Up to three GIF or PNG files; 2 MB each.</p>
+          <label>Photographs or documents <span class="optional">Optional</span><input name="attachments[]" type="file" accept="image/gif,image/jpeg,image/png,image/webp,application/pdf" multiple></label>
+          <p class="field-hint">Up to three GIF, JPG, PNG, WebP or PDF files; 5 MB each.</p>
           <label>Preferred contact
             <select name="contact">
               <option>Phone</option><option>Text message</option><option>Email</option>

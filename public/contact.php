@@ -59,8 +59,13 @@ function validateAttachments(): array
         return [];
     }
 
-    $allowedMimeTypes = ['image/gif', 'image/png'];
-    $allowedExtensions = ['gif', 'png'];
+    $allowedMimeTypes = [
+        'image/gif' => 'gif',
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'application/pdf' => 'pdf',
+    ];
     $validated = [];
 
     foreach ($names as $index => $name) {
@@ -76,18 +81,27 @@ function validateAttachments(): array
 
         $tmpName = (string) ($tmpNames[$index] ?? '');
         $size = (int) ($sizes[$index] ?? 0);
-        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        $mime = is_file($tmpName) ? (string) mime_content_type($tmpName) : '';
-
-        if ($size <= 0 || $size > 2 * 1024 * 1024) {
+        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
             continue;
         }
 
-        if (!in_array($mime, $allowedMimeTypes, true) && !in_array($extension, $allowedExtensions, true)) {
+        $mime = (string) mime_content_type($tmpName);
+
+        if ($size <= 0 || $size > 5 * 1024 * 1024) {
             continue;
         }
 
-        $validated[] = ['name' => $fileName, 'tmp_name' => $tmpName, 'size' => $size];
+        if (!isset($allowedMimeTypes[$mime])) {
+            continue;
+        }
+
+        $validated[] = [
+            'name' => $fileName,
+            'tmp_name' => $tmpName,
+            'size' => $size,
+            'mime_type' => $mime,
+            'extension' => $allowedMimeTypes[$mime],
+        ];
 
         if (count($validated) >= 3) {
             break;
@@ -99,27 +113,25 @@ function validateAttachments(): array
 
 function saveAttachments(int $requestId, array $attachments): array
 {
-    $rootDir = __DIR__ . '/uploads/estimate-requests/' . $requestId;
+    $rootDir = dirname(__DIR__) . '/storage/estimate-requests/' . $requestId;
     if (!is_dir($rootDir) && !mkdir($rootDir, 0775, true) && !is_dir($rootDir)) {
         throw new RuntimeException('Could not create the upload directory for this request.');
     }
 
     $saved = [];
 
-    foreach ($attachments as $index => $attachment) {
+    foreach ($attachments as $attachment) {
         $originalName = basename((string) ($attachment['name'] ?? 'attachment'));
         $tmpName = (string) ($attachment['tmp_name'] ?? '');
         $size = (int) ($attachment['size'] ?? 0);
+        $mimeType = (string) ($attachment['mime_type'] ?? 'application/octet-stream');
+        $extension = (string) ($attachment['extension'] ?? 'bin');
 
-        if ($tmpName === '' || !is_file($tmpName)) {
+        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
             continue;
         }
 
-        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        $safeBase = preg_replace('/[^A-Za-z0-9._-]+/', '-', pathinfo($originalName, PATHINFO_FILENAME));
-        $safeBase = trim((string) $safeBase, '-_.');
-        $safeBase = $safeBase !== '' ? $safeBase : 'attachment';
-        $storedName = $safeBase . '-' . $index . '-' . time() . '.' . $extension;
+        $storedName = bin2hex(random_bytes(16)) . '.' . $extension;
         $storedPath = $rootDir . '/' . $storedName;
 
         if (!@move_uploaded_file($tmpName, $storedPath)) {
@@ -129,8 +141,8 @@ function saveAttachments(int $requestId, array $attachments): array
         $saved[] = [
             'original_name' => $originalName,
             'stored_name' => $storedName,
-            'stored_path' => '/uploads/estimate-requests/' . $requestId . '/' . $storedName,
-            'mime_type' => mime_content_type($storedPath) ?: 'application/octet-stream',
+            'stored_path' => 'storage/estimate-requests/' . $requestId . '/' . $storedName,
+            'mime_type' => $mimeType,
             'file_size' => $size,
         ];
     }
@@ -158,7 +170,7 @@ if ($lastSubmission > time() - 30) {
     finish('error', 'Please wait a moment before sending another request.');
 }
 
-$name = trim((string) ($_POST['name'] ?? ''));
+$name = trim((string) preg_replace('/[\r\n]+/', ' ', (string) ($_POST['name'] ?? '')));
 $phone = trim((string) ($_POST['phone'] ?? ''));
 $email = filter_var(trim((string) ($_POST['email'] ?? '')), FILTER_VALIDATE_EMAIL);
 $property = trim((string) ($_POST['property'] ?? ''));
@@ -232,7 +244,7 @@ try {
 
     $sent = mail($mailTo, $subject, $body, implode("\r\n", $headers));
     if (!$sent) {
-        throw new RuntimeException('The email server rejected the estimate request.');
+        error_log('Circuit Science notification email was not accepted by the hosting mail transport for request #' . $requestId);
     }
 
     $confirmationSubject = 'We received your estimate request';
@@ -266,5 +278,5 @@ try {
     finish('sent');
 } catch (Throwable $error) {
     error_log('Circuit Science contact form error: ' . $error->getMessage());
-    finish('error', $error->getMessage());
+    finish('error', 'We could not send your request. Please call 905-616-2987 or try again later.');
 }
