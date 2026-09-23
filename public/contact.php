@@ -33,7 +33,7 @@ function loadEmailEnv(string $path): array
     return $env;
 }
 
-function finish(string $state, ?string $reason = null): never
+function finish(string $state, ?string $reason = null): void
 {
     $location = '/?form=' . rawurlencode($state);
     if ($reason !== null && $reason !== '') {

@@ -3,6 +3,6 @@
   "description": "Circuit Science Inc. website and secure estimate request form",
   "type": "project",
   "require": {
-    "php": ">=8.1"
+    "php": ">=8.0"
   }
 }

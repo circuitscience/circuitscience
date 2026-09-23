@@ -10,6 +10,14 @@ function getPDO(): PDO
         return $pdo;
     }
 
+    if (!class_exists('PDO')) {
+        throw new RuntimeException('The PHP PDO extension is not enabled. Enable PDO and PDO MySQL for this domain.');
+    }
+
+    if (!in_array('mysql', PDO::getAvailableDrivers(), true)) {
+        throw new RuntimeException('The PHP PDO MySQL driver is not enabled. Enable pdo_mysql for this domain.');
+    }
+
     $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_PORT, DB_NAME);
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

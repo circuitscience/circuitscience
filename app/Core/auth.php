@@ -84,7 +84,7 @@ function authenticate(string $email, string $password): ?array
 {
     $pdo = getPDO();
     $stmt = $pdo->prepare('SELECT * FROM customers WHERE email = :email AND status = "active"');
-    $stmt->execute([':email' => mb_strtolower($email)]);
+    $stmt->execute([':email' => strtolower($email)]);
     $customer = $stmt->fetch();
 
     if ($customer && password_verify($password, $customer['password_hash'])) {

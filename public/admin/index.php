@@ -39,6 +39,7 @@ $archivedRequests = 0;
 $servicePackages = 0;
 $productCategories = 0;
 $catalogItems = 0;
+$jobMaterials = 0;
 $dbError = '';
 
 try {
@@ -56,6 +57,11 @@ try {
     }
 
     $servicePackages = (int) $pdo->query('SELECT COUNT(*) FROM service_packages WHERE is_active = 1')->fetchColumn();
+    try {
+        $jobMaterials = (int) $pdo->query('SELECT COUNT(*) FROM job_materials WHERE is_active = 1')->fetchColumn();
+    } catch (Throwable $ignored) {
+        $jobMaterials = 0;
+    }
     $productCategories = (int) $pdo->query('SELECT COUNT(*) FROM product_categories WHERE is_active = 1')->fetchColumn();
     $tables = $pdo->query('SELECT table_name FROM product_categories WHERE is_active = 1')->fetchAll(PDO::FETCH_COLUMN);
     foreach ($tables as $table) {
@@ -69,6 +75,7 @@ try {
     $servicePackages = 0;
     $productCategories = 0;
     $catalogItems = 0;
+    $jobMaterials = 0;
 }
 ?>
 <!doctype html>
@@ -210,6 +217,7 @@ try {
         <a href="/admin/reviews.php#requests">Requests</a>
         <a href="/admin/reviews.php#reviews">Reviews</a>
         <a href="/admin/reviews.php#catalog">Catalog</a>
+        <a href="/admin/materials.php">Job materials</a>
         <a href="/admin/reviews.php#settings">Settings</a>
         <a href="/admin/index.php?logout=1">Sign out</a>
       </nav>
@@ -254,6 +262,10 @@ try {
           <small>Service packages</small>
           <strong><?php echo (int) $servicePackages; ?></strong>
         </div>
+        <div class="stat">
+          <small>Job materials</small>
+          <strong><?php echo (int) $jobMaterials; ?></strong>
+        </div>
       </div>
       <?php endif; ?>
 
@@ -263,6 +275,7 @@ try {
           <a href="/admin/reviews.php#requests">View requests</a>
           <a href="/admin/reviews.php#reviews">Add review</a>
           <a href="/admin/reviews.php#catalog">Manage catalog</a>
+          <a href="/admin/materials.php">Manage job materials</a>
           <a href="/admin/reviews.php#settings">Business settings</a>
         </div>
       </section>

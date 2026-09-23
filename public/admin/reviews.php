@@ -30,6 +30,7 @@ $requests = [];
 $archivedRequests = [];
 $generalInfo = [];
 $dbError = '';
+$jobMaterialsCount = 0;
 $dashboardStats = [
     'active_requests' => 0,
     'archived_requests' => 0,
@@ -37,6 +38,7 @@ $dashboardStats = [
     'categories' => 0,
     'catalog_items' => 0,
     'service_packages' => 0,
+    'job_materials' => 0,
 ];
 
 try {
@@ -106,6 +108,12 @@ try {
     }
 
     $generalInfo = $pdo->query('SELECT * FROM general_info ORDER BY id DESC LIMIT 1')->fetch();
+    try {
+        $jobMaterialsCount = (int) $pdo->query('SELECT COUNT(*) FROM job_materials WHERE is_active = 1')->fetchColumn();
+    } catch (Throwable $ignored) {
+        $jobMaterialsCount = 0;
+    }
+
     $dashboardStats = [
         'active_requests' => count($requests),
         'archived_requests' => count($archivedRequests),
@@ -113,6 +121,7 @@ try {
         'categories' => 0,
         'catalog_items' => 0,
         'service_packages' => 0,
+        'job_materials' => 0,
     ];
 } catch (Throwable $e) {
     $dbError = 'Database connection failed: ' . $e->getMessage();
@@ -154,11 +163,25 @@ if ($pdo instanceof PDO) {
         'categories' => count($productCategories),
         'catalog_items' => array_sum(array_map('count', $categoryProducts)),
         'service_packages' => (int) $pdo->query('SELECT COUNT(*) FROM service_packages WHERE is_active = 1')->fetchColumn(),
+        'job_materials' => $jobMaterialsCount,
     ];
 
     $stmt = $pdo->query('SELECT id, package_code AS item_number, name AS item_name, NULL AS item_manufacturer, NULL AS item_dimensions, final_price AS item_cost, 1 AS item_quantity, NULL AS item_image, 0 AS inventory, category AS category, description FROM service_packages WHERE is_active = 1 ORDER BY category ASC, name ASC');
     foreach ($stmt->fetchAll() as $row) {
         $allProducts[] = ['table' => 'service_packages', 'label' => 'Service Package'] + $row;
+    }
+
+    try {
+        $stmt = $pdo->query("SELECT id, CONCAT('MAT-', id) AS item_number, name AS item_name, manufacturer AS item_manufacturer, unit AS item_dimensions, price AS item_cost, 1 AS item_quantity, image_url AS item_image, 0 AS inventory, category, subcategory, description FROM job_materials WHERE is_active = 1 ORDER BY category, subcategory, name");
+        foreach ($stmt->fetchAll() as $row) {
+            $materialGroup = 'Job Material / ' . ucfirst(str_replace('_', ' ', (string) $row['category']));
+            if (trim((string) ($row['subcategory'] ?? '')) !== '') {
+                $materialGroup .= ' / ' . trim((string) $row['subcategory']);
+            }
+            $allProducts[] = ['table' => 'job_materials', 'label' => $materialGroup] + $row;
+        }
+    } catch (Throwable $ignored) {
+        // The materials migration may not have been applied yet.
     }
 } else {
     $productCategories = [];
@@ -417,13 +440,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['create_estimate']) |
         }
         [$table, $productId] = $parts;
         $isServicePackage = $table === 'service_packages';
-        if ((!isset($productTables[$table]) && !$isServicePackage) || !ctype_digit((string) $productId)) {
+        $isJobMaterial = $table === 'job_materials';
+        if ((!isset($productTables[$table]) && !$isServicePackage && !$isJobMaterial) || !ctype_digit((string) $productId)) {
             continue;
         }
         $quantity = max(1, (int) ($lineQty[$index] ?? 1));
 
         if ($isServicePackage) {
             $row = $pdo->query('SELECT id, package_code AS item_number, name AS item_name, NULL AS item_manufacturer, NULL AS item_dimensions, final_price AS item_cost FROM service_packages WHERE is_active = 1 AND id = ' . (int) $productId . ' LIMIT 1')->fetch();
+        } elseif ($isJobMaterial) {
+            $row = $pdo->query("SELECT id, CONCAT('MAT-', id) AS item_number, name AS item_name, manufacturer AS item_manufacturer, unit AS item_dimensions, price AS item_cost FROM job_materials WHERE is_active = 1 AND id = " . (int) $productId . ' LIMIT 1')->fetch();
         } else {
             $row = $pdo->query('SELECT id, item_number, item_name, item_manufacturer, item_dimensions, item_cost FROM ' . $table . ' WHERE is_active = 1 AND id = ' . (int) $productId . ' LIMIT 1')->fetch();
         }
@@ -583,6 +609,7 @@ if ($allRequestIds !== []) {
         <a href="#requests">Requests</a>
         <a href="#reviews">Reviews</a>
         <a href="#catalog">Catalog</a>
+        <a href="/admin/materials.php">Materials</a>
         <a href="#settings">Settings</a>
         <a href="/admin/reviews.php?logout=1">Sign out</a>
       </nav>
@@ -617,6 +644,10 @@ if ($allRequestIds !== []) {
         <div class="stat-card">
           <small>Service packages</small>
           <strong><?php echo (int) $dashboardStats['service_packages']; ?></strong>
+        </div>
+        <div class="stat-card">
+          <small>Job materials</small>
+          <strong><?php echo (int) $dashboardStats['job_materials']; ?></strong>
         </div>
       </div>
     </section>

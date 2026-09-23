@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $pdo = getPDO();
             $existing = $pdo->prepare('SELECT id FROM customers WHERE email = :email');
-            $existing->execute([':email' => mb_strtolower($email)]);
+            $existing->execute([':email' => strtolower($email)]);
 
             if ($existing->fetch()) {
                 $message = 'An account with that email already exists.';
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([
                     ':first_name' => $firstName,
                     ':last_name' => $lastName,
-                    ':email' => mb_strtolower($email),
+                    ':email' => strtolower($email),
                     ':phone' => $phone,
                     ':password_hash' => $hash,
                 ]);

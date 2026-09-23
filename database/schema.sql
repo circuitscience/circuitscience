@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS customers (
     status ENUM('active', 'inactive', 'blocked') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS property_types (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS property_types (
     description TEXT NULL,
     sort_order INT DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1
-);
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS customer_properties (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS customer_properties (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_customer_properties_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
     CONSTRAINT fk_customer_properties_type FOREIGN KEY (property_type_id) REFERENCES property_types(id) ON DELETE SET NULL
-);
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS service_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS service_categories (
     icon VARCHAR(100) NULL,
     sort_order INT DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1
-);
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 INSERT INTO service_categories (name, slug, description, sort_order) VALUES
 ('Electrical', 'electrical', 'Outlets, switches, panels, lighting, fans, EV chargers, pools, and troubleshooting.', 10),
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS task_scenario_categories (
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS task_scenarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS task_scenarios (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_task_scenarios_category FOREIGN KEY (task_scenario_category_id) REFERENCES task_scenario_categories(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS service_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS service_requests (
     CONSTRAINT fk_service_requests_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
     CONSTRAINT fk_service_requests_property FOREIGN KEY (property_id) REFERENCES customer_properties(id) ON DELETE SET NULL,
     CONSTRAINT fk_service_requests_property_type FOREIGN KEY (property_type_id) REFERENCES property_types(id) ON DELETE SET NULL
-);
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS reviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     approved TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS estimate_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS estimate_requests (
     archived_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS estimate_request_attachments (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS estimate_request_attachments (
     file_size INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_estimate_request_attachments_request FOREIGN KEY (estimate_request_id) REFERENCES estimate_requests(id) ON DELETE CASCADE
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS product_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS product_categories (
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS service_packages (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS service_packages (
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS service_package_components (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS service_package_components (
     notes TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_service_package_components_package FOREIGN KEY (service_package_id) REFERENCES service_packages(id) ON DELETE CASCADE
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS estimates (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS estimates (
     total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS estimate_line_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -259,7 +259,7 @@ CREATE TABLE IF NOT EXISTS estimate_line_items (
     line_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_estimate_line_items_estimate FOREIGN KEY (estimate_id) REFERENCES estimates(id) ON DELETE CASCADE
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS general_info (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS general_info (
     notes TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -297,7 +297,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_invoices_estimate FOREIGN KEY (estimate_id) REFERENCES estimates(id) ON DELETE SET NULL
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS invoice_line_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -313,4 +313,71 @@ CREATE TABLE IF NOT EXISTS invoice_line_items (
     line_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_invoice_line_items_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS material_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+INSERT INTO material_categories (slug, name, is_active) VALUES
+('electrical', 'Electrical', 1),
+('plumbing', 'Plumbing', 1),
+('drywall', 'Drywall', 1),
+('paint', 'Paint', 1),
+('flooring', 'Flooring', 1),
+('windows_doors', 'Windows & Doors', 1),
+('landscaping', 'Landscaping', 1)
+ON DUPLICATE KEY UPDATE name = VALUES(name), is_active = VALUES(is_active);
+
+CREATE TABLE IF NOT EXISTS material_units (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(30) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+INSERT INTO material_units (code, name, is_active) VALUES
+('foot', 'Foot', 1),
+('meter', 'Metre', 1),
+('sqft', 'Square foot', 1),
+('sqmeters', 'Square metre', 1),
+('single', 'Single item', 1),
+('pkg_amt', 'Package amount', 1)
+ON DUPLICATE KEY UPDATE name = VALUES(name), is_active = VALUES(is_active);
+
+CREATE TABLE IF NOT EXISTS material_manufacturers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_material_manufacturers_name (name)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS job_materials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(180) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    subcategory VARCHAR(100) NULL,
+    description TEXT NULL,
+    manufacturer VARCHAR(120) NULL,
+    unit VARCHAR(30) NOT NULL,
+    other_info TEXT NULL,
+    image_url VARCHAR(500) NULL,
+    price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_job_materials_name (name),
+    KEY idx_job_materials_category (category),
+    KEY idx_job_materials_unit (unit),
+    CONSTRAINT fk_job_materials_category FOREIGN KEY (category) REFERENCES material_categories(slug) ON UPDATE CASCADE,
+    CONSTRAINT fk_job_materials_unit FOREIGN KEY (unit) REFERENCES material_units(code) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
